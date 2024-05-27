@@ -199,9 +199,9 @@ class BeatNet:
     def activation_extractor_online(self, audio_path):
         with torch.no_grad():
             if isinstance(audio_path, str):
-            	audio, _ = librosa.load(audio_path, sr=self.sample_rate)  # reading the data
-            elif len(np.shape(audio_path))>1:
-                audio = np.mean(audio_path ,axis=1)
+                audio, _ = librosa.load(audio_path, sr=self.sample_rate)  # reading the data
+            elif len(np.shape(audio_path)) > 1:
+                audio = np.mean(audio_path, axis=1)
             else:
                 audio = audio_path
             feats = self.proc.process_audio(audio).T
