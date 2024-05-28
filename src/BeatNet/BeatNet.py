@@ -9,11 +9,11 @@ import os
 import torch
 import numpy as np
 from madmom.features import DBNDownBeatTrackingProcessor
-from BeatNet.particle_filtering_cascade import particle_filter_cascade
-from BeatNet.log_spect import LOG_SPECT
+from particle_filtering_cascade import particle_filter_cascade
+from log_spect import LOG_SPECT
 import librosa
 import sys
-from BeatNet.model import BDA
+from model import BDA
 import pyaudio
 import matplotlib.pyplot as plt
 import time
@@ -89,8 +89,8 @@ class BeatNet:
                                              rate=self.sample_rate,
                                              input=True,
                                              frames_per_buffer=self.log_spec_hop_length,)
-                                             
-    def process(self, audio_path=None):   
+    # gives output from self.pred                                         
+    def process(self, audio_path=None):   # takes audio path
         if self.mode == "stream":
             if self.inference_model != "PF":
                     raise RuntimeError('The infernece model should be set to "PF" for the streaming mode!')
@@ -138,7 +138,7 @@ class BeatNet:
                 output = self.estimator(preds)  # Using DBN offline inference to infer beat/downbeats
                 return output
         
-        
+
         elif self.mode == "offline":
                 if self.inference_model != "DBN":
                     raise RuntimeError('The infernece model should be set to "DBN" for the offline mode!')
@@ -150,7 +150,7 @@ class BeatNet:
                 else:
                     raise RuntimeError('An audio object or file directory is required for the offline usage!')
                 
-
+    
     def activation_extractor_stream(self):
         # TODO: 
         ''' Streaming window
@@ -172,7 +172,13 @@ class BeatNet:
                 self.pred = np.transpose(pred[:2, :])
 
 
-    def activation_extractor_realtime(self, audio_path):
+    def activation_extractor_realtime(self, audio_path: str) -> None:
+        '''
+        Extracts activations from the audio data in real-time.
+
+        Parameters:
+            audio_path (str): Path to the audio file.
+        '''
         with torch.no_grad():
             if self.counter==0: #loading the audio
                 if isinstance(audio_path, str):
@@ -196,7 +202,17 @@ class BeatNet:
                 self.completed = 1
 
 
-    def activation_extractor_online(self, audio_path):
+    
+    def activation_extractor_online(self, audio_path: str) -> np.ndarray:
+        '''
+        Extracts activations from the audio data online.
+
+        Parameters:
+            audio_path (str): Path to the audio file.
+
+        Returns:
+            np.ndarray: A numpy array containing the extracted activations.
+        '''
         with torch.no_grad():
             if isinstance(audio_path, str):
                 audio, _ = librosa.load(audio_path, sr=self.sample_rate)  # reading the data
@@ -205,11 +221,17 @@ class BeatNet:
             else:
                 audio = audio_path
             feats = self.proc.process_audio(audio).T
+            print(feats.shape,'is the shape of feats after processing')
             feats = torch.from_numpy(feats)
             feats = feats.unsqueeze(0).to(self.device)
+            print(feats.shape,'is the shape of feats while loading to model')
             preds = self.model(feats)[0]  # extracting the activations by passing the feature through the NN
             preds = self.model.final_pred(preds)
+            print(preds.shape,'is the shape of preds after final_pred')
             preds = preds.cpu().detach().numpy()
+            print(preds.shape,'is the shape of preds after detaching')
+
             preds = np.transpose(preds[:2, :])
+            print(preds.shape,'is the shape of preds after transposing, it is final')
         return preds
 
