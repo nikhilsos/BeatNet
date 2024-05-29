@@ -82,9 +82,13 @@ class LOG_SPECT(FeatureModule):
                 frames = FramedSignalProcessor(frame_size=frame_size, hop_size=hop_size, num_frames=4)
 
             stft = ShortTimeFourierTransformProcessor()  # caching FFT window
+            
             filt = FilteredSpectrogramProcessor(num_bands=num_band, fmin=30, fmax=17000, norm_filters=True)
+            
             spec = LogarithmicSpectrogramProcessor(mul=1, add=1)
+            
             diff = SpectrogramDifferenceProcessor(diff_ratio=0.5, positive_diffs=True, stack_diffs=np.hstack)
+            
 
             # Process each frame size with spec and diff sequentially
             multi.append(SequentialProcessor((frames, stft, filt, spec, diff)))
@@ -99,6 +103,6 @@ class LOG_SPECT(FeatureModule):
 if __name__ == '__main__':
     
     # Test the feature extraction module and get features for a sample audio file
-    audio_path = '/home/nikhil/moji/BeatNet/src/BeatNet/test_data/808kick120bpm.mp3'
+    audio_path = '/home/nikhil/moji/BeatNet/test/test_data/wav/Albums-AnaBelen_Veneo-01.wav'
     op = LOG_SPECT().process_audio(audio_path)
     print(op.shape)

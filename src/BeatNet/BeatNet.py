@@ -164,11 +164,15 @@ class BeatNet:
                 self.pred = np.zeros([1,2])
             else:
                 feats = self.proc.process_audio(self.stream_window).T[-1]
+                print(feats.shape,'is the shape of feats in model after it is fed to the model, extracting last')
                 feats = torch.from_numpy(feats)
                 feats = feats.unsqueeze(0).unsqueeze(0).to(self.device)
+                print(feats.shape,'is the shape of featsthat the DL model takes while loading to model')
                 pred = self.model(feats)[0]
+                print(pred.shape,'is the shape of pred after model, 0 is taken')
                 pred = self.model.final_pred(pred)
                 pred = pred.cpu().detach().numpy()
+                print(pred.shape,'is the shape of pred after detaching converted to numpy')
                 self.pred = np.transpose(pred[:2, :])
 
 
@@ -221,13 +225,11 @@ class BeatNet:
             else:
                 audio = audio_path
             feats = self.proc.process_audio(audio).T
-            print(feats.shape,'is the shape of feats after processing')
             feats = torch.from_numpy(feats)
             feats = feats.unsqueeze(0).to(self.device)
             print(feats.shape,'is the shape of feats while loading to model')
             preds = self.model(feats)[0]  # extracting the activations by passing the feature through the NN
             preds = self.model.final_pred(preds)
-            print(preds.shape,'is the shape of preds after final_pred')
             preds = preds.cpu().detach().numpy()
             print(preds.shape,'is the shape of preds after detaching')
 
